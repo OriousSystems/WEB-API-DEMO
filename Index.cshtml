@@ -1,0 +1,262 @@
+﻿@*<div class="jumbotron">
+        <h1>ASP.NET</h1>
+        <p class="lead">ASP.NET is a free web framework for building great Web sites and Web applications using HTML, CSS, and JavaScript.</p>
+        <p><a href="https://asp.net" class="btn btn-primary btn-lg">Learn more &raquo;</a></p>
+    </div>*@
+@*<div class="row">
+        <div class="col-md-4">
+            <h2>Getting started</h2>
+            <p>ASP.NET Web API is a framework that makes it easy to build HTTP services that reach
+            a broad range of clients, including browsers and mobile devices. ASP.NET Web API
+            is an ideal platform for building RESTful applications on the .NET Framework.</p>
+            <p><a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkId=301870">Learn more &raquo;</a></p>
+        </div>
+        <div class="col-md-4">
+            <h2>Get more libraries</h2>
+            <p>NuGet is a free Visual Studio extension that makes it easy to add, remove, and update libraries and tools in Visual Studio projects.</p>
+            <p><a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkId=301871">Learn more &raquo;</a></p>
+        </div>
+        <div class="col-md-4">
+            <h2>Web Hosting</h2>
+            <p>You can easily find a web hosting company that offers the right mix of features and price for your applications.</p>
+            <p><a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkId=301872">Learn more &raquo;</a></p>
+        </div>
+    </div>*@
+
+
+<html>
+<head>
+    <script src="~/Scripts/jquery-3.4.1.min.js"></script>
+    <script src="~/Scripts/knockout-3.5.0.js"></script>
+    <script>
+        $(function () {
+            $("#updateCustomerBtn").hide();            
+        });        
+            
+    </script>
+
+</head>
+<body>
+    <div class="page-header">
+        <h2 class="text-center">Customer Registration</h2>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h2 class="panel-title">Register new Customer</h2>
+                </div>
+
+                <div class="panel-body">
+
+                    <form role="form">
+                        <div class="form-group">
+                            <label>Customer Id</label>
+                            <input id="inpId" type="text" class="form-control" disabled="disabled"/>
+                        </div>
+                        <div class="form-group">
+                            <label for="inpFirstName">First Name</label>
+                            <input id="inpFirstName" type="text" class="form-control" data-bind="value:$root.FirstName" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="inpLastName">Last Name</label>
+                            <input id="inpLastName" type="text" class="form-control" data-bind="value:$root.LastName" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="inpGender">Gender</label>
+                            <select id="inpGender" class="form-control" data-bind="options:genders, value:Gender"></select>
+                        </div>
+
+                    </form>
+
+                    <input type="button" id="btnAddCustomer" class="btn btn-primary" value="Add customer" data-bind="click:$root.addCustomer" />            
+                    <input type="button" id="updateCustomerBtn" class="btn btn-primary" value="update customer" data-bind="click:$root.updateCustomer"  /> 
+
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h2 class="panel-title">Registered Customers</h2>
+                </div>
+                <div class="panel-body">
+
+                    <table class="table table-striped table-bordered table-condensed">
+                        <thead>
+                            <tr>
+                                @*<th>ID</th>*@
+                                @*<th>First Name</th>
+                                <th>Last Name</th>*@
+                                <th>Full Name</th>
+                                <th>Gender</th>
+                            </tr>
+                        </thead>
+
+                        <tbody data-bind="foreach: customerList">
+                            <tr>
+                                @*<td data-bind="text: Id"></td>*@
+                                @*<td data-bind="text: FirstName"></td>
+                                <td data-bind="text: LastName"></td>*@
+                                <td data-bind="text: FullName"></td>
+                                <td data-bind="text: Gender"></td>
+                                <td><input type="button" class="btn btn-danger btn-xs" value=" [x] delete " data-bind="click: $root.removeCustomer" /></td>                                
+                                <td><input type="button" class="btn btn-group btn-xs" value="edit" id="edit" data-bind="click:$root.editCustomer" /></td>
+                                
+                            </tr>
+                        </tbody>
+                    </table>
+                    <br />                   
+
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    
+
+    <script>
+        
+        var ViewModel = function (items) {
+            var self = this;
+            
+            self.Id = ko.observable(items.ID);
+            self.FirstName = ko.observable(items.FIRSTNAME);
+            self.LastName = ko.observable(items.LASTNAME);
+            self.Gender = ko.observable(items.GENDER);
+            self.FullName = ko.computed(function () {
+                return self.FirstName() + " "+self.LastName();
+            }, self);
+        }
+        var CustomerViewModel = function () {
+            var self = this;
+            
+            self.Id = ko.observable("");
+            self.FirstName = ko.observable("");
+            self.LastName = ko.observable("");
+            self.Gender = ko.observable("");
+            self.genders = ko.observableArray(['M', 'F']);
+
+            self.customerList = ko.observableArray([]);
+            
+            var EmpData = {
+                Id: self.Id,
+                FirstName: self.FirstName,
+                LastName: self.LastName,
+                Gender: self.Gender
+            };
+            GetCustomers();
+
+                       
+            
+            //Function to perform POST (insert customer) operation
+            self.addCustomer = function () {
+                //Ajax call to Insert the customer
+                $.ajax({
+                    type: "POST",
+                    url: "http://localhost:64087/api/Customer",
+                    data: ko.toJSON(EmpData), //Convert the Observable Data into JSON
+                    contentType: "application/json",
+                    success: function (data) {                        
+                        alert("Record Added Successfully");
+                        GetCustomers();
+                    },
+                    error: function () {
+                        alert("Failed");
+                    }
+                });
+            }
+            //add customer Ends Here
+
+            //Function to perform DELETE(delete customer)
+            self.removeCustomer = function (customer) {
+                //ajax call to delete the customer
+                $.ajax({
+                    type: "DELETE",
+                    url: "http://localhost:64087/api/Customer/" + customer.Id(),
+                    contentType: "application/json",                    
+                    success: function (data) {                                               
+                        alert("record deleted successfully");
+                        GetCustomers();
+                    },
+                    error: function (error) {
+                        alert(error.status + "<--and--> " + error.statusText);
+                    }
+                });
+            };
+            //delete end 
+
+            //function to bind data into the fields(textboxes)
+            self.editCustomer = function (customer) {
+                //ajax call
+                $.ajax({
+                    type: "GET",
+                    url: "/api/Customer/" + customer.Id(),
+                    contentType: "application/json",
+                    success: function (data) {
+                        self.Id(data[0].ID);
+                        self.FirstName(data[0].FIRSTNAME);
+                        self.LastName(data[0].LASTNAME);
+                        self.Gender(data[0].GENDER);
+                    }
+                });
+                $('#updateCustomerBtn').show();
+                $('#btnAddCustomer').hide();                
+            }
+            //edit ends here
+
+            //function to perform update customer
+            self.updateCustomer = function (customer) {
+                //ajax call
+                $.ajax({
+                    type: "PUT",
+                    url: "http://localhost:64087/api/Customer/" + customer.Id(),                    
+                    data: ko.toJSON(EmpData),
+                    contentType: "application/json",
+                    success: function (data) {
+                        alert("updated successfully");
+                        GetCustomers();
+                    },
+                    error: function (error) {
+                        alert(error.status + " " + error.statusText);
+                    }
+                })
+                $('#updateCustomerBtn').hide();
+                $('#btnAddCustomer').show();
+                self.Id("");
+                self.FirstName("");
+                self.LastName("");
+                self.Gender("");
+            };
+            //update ends here
+
+            //Function to perform get all the customers
+            function GetCustomers() {
+                self.customerList.removeAll();
+                //ajax call
+                $.ajax({
+                    type: "GET",
+                    url: "/api/Customer",
+                    contentType: "application/json",
+                    //data: { "id": 1 },
+                    success: function (data) {
+                        for (var i = 0; i < data.length; i++) {
+                            var dd = new ViewModel(data[i]);
+                            self.customerList.push(dd);
+                        }                        
+                    }
+                });            
+            };
+        };
+        ko.applyBindings(new CustomerViewModel());
+    </script>
+
+</body>
+</html>
+
+
+
